@@ -13,6 +13,7 @@ App jam untuk Amazfit (layar bulat, Zepp OS API 3.0+). Perangkat uji utama: Amaz
 | `page/gt/detail` | Metrik kualitas + log lengkap satu sesi |
 | `page/gt/history` | Daftar sesi tersimpan (maks. 20) |
 | `page/gt/credit` | Credit |
+| `app-widget` | Shortcut card: START / LANJUT CODE sekali tap dari layar kartu pintasan |
 | `shared/core.js` | Logika murni (siklus, epi, metrik, format waktu) — diuji di `test/` |
 | `shared/storage.js` | Simpan sesi berjalan & riwayat di jam |
 | `shared/vibrate.js` | Pola getar per jenis pengingat |

@@ -12,7 +12,10 @@
     "vender": "rizqanfahlevvi",
     "description": "Timer and action recorder for cardiac arrest resuscitation"
   },
-  "permissions": ["data:os.device.info", "device:os.local_storage"],
+  "permissions": [
+    "data:os.device.info",
+    "device:os.local_storage"
+  ],
   "runtime": {
     "apiVersion": {
       "compatible": "3.0",
@@ -33,6 +36,18 @@
             "page/gt/history/index.page",
             "page/gt/credit/index.page"
           ]
+        },
+        "app-widget": {
+          "widgets": [
+            {
+              "path": "app-widget/index",
+              "icon": "icon.png",
+              "name": "Code Blue",
+              "runtime": {
+                "type": "js"
+              }
+            }
+          ]
         }
       },
       "platforms": [
@@ -45,10 +60,24 @@
   },
   "i18n": {
     "en-US": {
-      "appName": "Code Blue Helper"
+      "appName": "Code Blue Helper",
+      "app-widget": {
+        "widgets": [
+          {
+            "name": "Code Blue"
+          }
+        ]
+      }
     },
     "id-ID": {
-      "appName": "Code Blue Helper"
+      "appName": "Code Blue Helper",
+      "app-widget": {
+        "widgets": [
+          {
+            "name": "Code Blue"
+          }
+        ]
+      }
     }
   },
   "defaultLanguage": "en-US"
