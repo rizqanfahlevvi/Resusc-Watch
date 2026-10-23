@@ -1,4 +1,4 @@
-# Resusc Watch
+# Code Blue Helper
 
 Aplikasi Zepp OS (Amazfit Active Premium) untuk mencatat waktu setiap tindakan saat resusitasi cardiac arrest, dengan pengingat getar untuk siklus CPR 2 menit dan interval epinefrin 3 menit.
 

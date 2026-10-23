@@ -1,4 +1,4 @@
-<title>Resusc Watch Prototype</title>
+<title>Code Blue Helper</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -175,7 +175,7 @@ body {
 
   <div class="panel">
     <div>
-      <h1>Resusc Watch</h1>
+      <h1>Code Blue Helper</h1>
       <p class="muted">Prototipe v0.1 untuk Amazfit (Zepp OS), dibuat untuk menguji alur UI sebelum ditulis jadi kode jam.</p>
     </div>
 
@@ -231,7 +231,7 @@ body {
 <script>
 (function () {
   'use strict';
-  var CYCLE_MS = 120000, PRE_MS = 10000, PAUSE_MS = 10000, HOLD_MS = 300, EPI_MS = 180000, TOAST_MS = 5000, HKEY = 'resusc-watch-history-v1';
+  var CYCLE_MS = 120000, PRE_MS = 10000, PAUSE_MS = 10000, HOLD_MS = 300, EPI_MS = 180000, TOAST_MS = 5000, HKEY = 'resusc-watch-history-v1'; // old key kept so saved sessions survive the rename
 
   var DEF = {
     start:   { label: 'Start CPR',      c: 'cyan' },
@@ -462,7 +462,7 @@ body {
 
   function renderStart() {
     var c = el('div', 'center');
-    c.appendChild(el('div', 'brand', 'RESUSC'));
+    c.appendChild(el('div', 'brand', 'CODE BLUE'));
     var b = el('button', 'startbtn', 'START<br>CODE<small>CPR MULAI</small>');
     b.onclick = startSession;
     c.appendChild(b);
