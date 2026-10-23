@@ -72,7 +72,7 @@ body {
 
 .hdr { position: absolute; left: 0; right: 0; top: 34px; text-align: center; pointer-events: none; z-index: 3; }
 .hdr .lbl { font-size: 17px; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
-.hdr .big { font-size: 60px; font-weight: 700; line-height: .95; font-variant-numeric: tabular-nums; }
+.hdr .big { font-size: 66px; font-weight: 700; line-height: .95; font-variant-numeric: tabular-nums; }
 .hdr .big.over { color: var(--red); }
 .hdr .big.rosc { color: var(--green); }
 .hdr .sub { margin-top: 4px; display: flex; justify-content: center; gap: 10px; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -263,9 +263,15 @@ body {
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function fmt(ms) {
     var neg = ms < 0; ms = Math.abs(ms);
-    var s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-    var out = pad(h) + ':' + pad(m) + ':' + pad(s % 60);
-    return (neg ? '+' : '') + out;
+    // Elapsed times: MM:SS:cc (minutes : seconds : hundredths), like a stopwatch.
+    var s = Math.floor(ms / 1000), m = Math.floor(s / 60), cs = Math.floor((ms % 1000) / 10);
+    return (neg ? '+' : '') + pad(m) + ':' + pad(s % 60) + ':' + pad(cs);
+  }
+  // Cycle countdown and time since ROSC: plain MM:SS so it reads at a glance.
+  function fmtMS(ms) {
+    var neg = ms < 0; ms = Math.abs(ms);
+    var s = neg ? Math.floor(ms / 1000) : Math.ceil(ms / 1000);
+    return (neg ? '+' : '') + pad(Math.floor(s / 60)) + ':' + pad(s % 60);
   }
   function clock(sess, t) { var d = new Date(sess.wallStart + t); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
   function dateStr(ms) { var d = new Date(ms); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
@@ -588,12 +594,12 @@ body {
     R.ring.setAttribute('class', 'ring');
     R.big.className = 'big';
     if (d.rosc) {
-      R.lbl.textContent = 'ROSC'; R.big.textContent = fmt(t - d.roscAt); R.big.classList.add('rosc');
+      R.lbl.textContent = 'ROSC'; R.big.textContent = fmtMS(t - d.roscAt); R.big.classList.add('rosc');
       R.ring.classList.add('rosc'); R.prog.setAttribute('stroke-dashoffset', 0);
     } else {
       var rem = d.cycleRem;
       R.lbl.textContent = rem <= 0 ? 'RHYTHM CHECK' : 'CYCLE';
-      R.big.textContent = fmt(rem);
+      R.big.textContent = fmtMS(rem);
       if (rem <= 0) { R.big.classList.add('over'); R.ring.classList.add('over'); }
       else if (rem <= PRE_MS) R.ring.classList.add('warn');
       R.prog.setAttribute('stroke-dashoffset', R.C * (1 - Math.max(0, rem) / CYCLE_MS));
@@ -613,7 +619,7 @@ body {
   var last = performance.now();
   setInterval(function () {
     var n = performance.now(); S.sim += (n - last) * S.speed; last = n; update();
-  }, 200);
+  }, 40);
 
   // ---------- swipe ----------
   var sx = 0, sy = 0, dx = 0, mode = null;
