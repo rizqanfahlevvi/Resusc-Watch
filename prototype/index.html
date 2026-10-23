@@ -112,7 +112,9 @@ body {
 .toast { position: absolute; left: 84px; right: 84px; top: 128px; height: 38px; z-index: 6; background: #f3f5f7; color: var(--black); border-radius: 22px;
   padding: 0 4px 0 16px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.6); }
 .toast .a { flex: 1; min-width: 0; font-size: 21px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.toast .undo { height: 32px; background: var(--black); color: var(--white); border: 0; border-radius: 18px; font-size: 18px; font-weight: 700; padding: 0 14px; }
+.toast.tap { cursor: pointer; }
+.toast.tap:active { background: #cfd5db; transform: scale(.98); }
+.toast .undo { display: flex; align-items: center; height: 32px; background: var(--black); color: var(--white); border: 0; border-radius: 18px; font-size: 18px; font-weight: 700; padding: 0 14px; }
 .hdr .lbl.adv { color: var(--amber); font-size: 19px; letter-spacing: .02em; white-space: nowrap; }
 
 .ov { position: absolute; inset: 0; z-index: 8; background: var(--black); display: flex; flex-direction: column; align-items: center; }
@@ -498,9 +500,14 @@ body {
     var t = el('div', 'toast');
     t.appendChild(el('div', 'a', '✓ ' + labels(S.session.events)[ev.id]));
     if (ev.type !== 'start') {
-      var u = el('button', 'undo', '↶ UNDO');
-      u.onclick = function () { undo(ev.id); };
-      t.appendChild(u);
+      // The whole pill is the undo target, so it can be hit with gloves on.
+      t.appendChild(el('span', 'undo', '↶ UNDO'));
+      t.classList.add('tap');
+      t.setAttribute('role', 'button');
+      t.setAttribute('aria-label', 'Undo ' + labels(S.session.events)[ev.id]);
+      t.tabIndex = 0;
+      t.onclick = function () { if (!S.dragged) undo(ev.id); };
+      t.onkeydown = function (k) { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); undo(ev.id); } };
     }
     screen.appendChild(t);
   }
