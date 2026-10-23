@@ -72,7 +72,7 @@ body {
 
 .hdr { position: absolute; left: 0; right: 0; top: 34px; text-align: center; pointer-events: none; z-index: 3; }
 .hdr .lbl { font-size: 17px; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
-.hdr .big { font-size: 66px; font-weight: 700; line-height: .95; font-variant-numeric: tabular-nums; }
+.hdr .big { font-size: 60px; font-weight: 700; line-height: .95; font-variant-numeric: tabular-nums; }
 .hdr .big.over { color: var(--red); }
 .hdr .big.rosc { color: var(--green); }
 .hdr .sub { margin-top: 4px; display: flex; justify-content: center; gap: 10px; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -102,8 +102,8 @@ body {
 
 .list { position: absolute; left: 66px; right: 66px; top: 166px; bottom: 74px; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 6px; }
 .list::-webkit-scrollbar { display: none; }
-.item { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 8px; background: #11161a; border-radius: 14px; padding: 7px 12px; border-left: 4px solid var(--c); text-align: left; border-top: 0; border-right: 0; border-bottom: 0; font-family: var(--f-num); color: var(--white); width: 100%; }
-.item .t { font-size: 25px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.item { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 8px; background: #11161a; border-radius: 14px; padding: 7px 12px; border-left: 4px solid var(--c); text-align: left; border-top: 0; border-right: 0; border-bottom: 0; font-family: var(--f-num); color: var(--white); width: 100%; }
+.item .t { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .item .l { font-size: 22px; font-weight: 600; line-height: 1.05; }
 .item .w { display: block; font-size: 14px; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
 .item .del { grid-column: 1 / -1; background: var(--red); color: var(--black); border: 0; border-radius: 10px; font-size: 20px; font-weight: 700; padding: 6px; }
@@ -138,7 +138,7 @@ body {
 .startbtn small { display: block; font-size: 19px; letter-spacing: .1em; margin-top: 6px; }
 .ghost { background: #1a2026; border: 0; border-radius: 999px; font-size: 21px; font-weight: 600; padding: 9px 26px; }
 .disc { font-size: 14px; color: var(--muted); max-width: 250px; line-height: 1.15; margin-top: 12px; font-family: var(--f-num); }
-.sum .big { font-size: 64px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.sum .big { font-size: 58px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .sum .out { font-size: 26px; font-weight: 700; margin-top: 2px; }
 .sum .stats { display: flex; gap: 16px; margin: 14px 0 18px; font-size: 20px; color: var(--muted); }
 .sum .stats b { display: block; font-size: 32px; color: var(--white); }
@@ -264,7 +264,7 @@ body {
   function fmt(ms) {
     var neg = ms < 0; ms = Math.abs(ms);
     var s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-    var out = h ? h + ':' + pad(m) + ':' + pad(s % 60) : m + ':' + pad(s % 60);
+    var out = pad(h) + ':' + pad(m) + ':' + pad(s % 60);
     return (neg ? '+' : '') + out;
   }
   function clock(sess, t) { var d = new Date(sess.wallStart + t); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
