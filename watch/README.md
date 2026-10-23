@@ -36,7 +36,7 @@ App jam untuk Amazfit (layar bulat, Zepp OS API 3.0+). Perangkat uji utama: Amaz
 2. Di app **Zepp** (HP): Profil → Pengaturan → Tentang → tap logo Zepp beberapa kali sampai **Developer Mode** aktif (letak menunya bisa sedikit berbeda antar versi app Zepp).
 3. Jalankan `zeus preview`, pilih perangkat, lalu scan QR yang muncul dari Zepp → Profil → Developer Mode → Scan.
 
-> `appId` di `app.json` (1000001) masih placeholder. Untuk publish ke store, ganti dengan appId resmi dari Developer Console.
+> `appId` di `app.json` (20004) masih sementara. appId `1000001` ditolak saat dipasang ("Failed to unzip the package"). Untuk publish ke store, ganti dengan appId resmi dari Zepp Developer Console.
 
 ## Tes logika
 
