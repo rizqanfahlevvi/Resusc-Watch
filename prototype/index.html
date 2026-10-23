@@ -1,0 +1,678 @@
+<title>Resusc Watch Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: round 466px watch face (scaled) beside a short instructions panel; single dark theme, like an AMOLED screen */
+:root {
+  color-scheme: dark;
+  --bg: #0d1013;
+  --panel: #151a1f;
+  --line: #262e36;
+  --fg: #e4e9ee;
+  --muted: #8d98a4;
+  --accent: #3fc1d9;
+  --cyan: #3fc1d9;
+  --amber: #f2b233;
+  --red: #f0524f;
+  --violet: #a68bf5;
+  --blue: #5b9cf2;
+  --sand: #d9a97a;
+  --green: #4cc38a;
+  --slate: #93a1b2;
+  --black: #000;
+  --white: #fff;
+  --f-num: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px;
+}
+.layout { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start; max-width: 1040px; margin: 0 auto; }
+.stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.panel { flex: 1 1 340px; min-width: 0; max-width: 520px; display: flex; flex-direction: column; gap: 18px; }
+.panel h1 { font-family: var(--f-num); font-weight: 700; font-size: 34px; letter-spacing: .02em; margin: 0; line-height: 1.05; text-wrap: balance; }
+.panel h2 { font-family: var(--f-num); font-weight: 600; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.panel p, .panel li { color: var(--fg); margin: 0; }
+.panel ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.muted { color: var(--muted); }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip-btn { font: 600 14px var(--f-body); color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.chip-btn[aria-pressed="true"] { background: var(--accent); color: var(--black); border-color: var(--accent); }
+.chip-btn:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.vib { font-family: var(--f-num); font-size: 18px; letter-spacing: .04em; min-height: 27px; }
+.vib.on { color: var(--amber); }
+.nav-row { display: flex; gap: 10px; align-items: center; }
+.nav-row .chip-btn { padding: 6px 12px; }
+
+/* Watch */
+.bezel { --size: 380px; width: calc(var(--size) + 28px); height: calc(var(--size) + 28px); border-radius: 50%; padding: 14px;
+  background: radial-gradient(circle at 30% 25%, #3a4148, #15191d 60%, #0a0c0e); box-shadow: 0 20px 50px rgba(0,0,0,.6), inset 0 0 0 1px #2c3238; }
+.bezel.buzz { animation: buzz .09s linear 0s 6; }
+@keyframes buzz { 0%{transform:translate(0,0)} 25%{transform:translate(-3px,1px)} 50%{transform:translate(3px,-1px)} 75%{transform:translate(-2px,-1px)} 100%{transform:translate(0,0)} }
+@media (prefers-reduced-motion: reduce) { .bezel.buzz { animation: none; box-shadow: 0 0 0 4px var(--amber); } }
+.fit { width: var(--size); height: var(--size); border-radius: 50%; overflow: hidden; position: relative; }
+.screen { width: 466px; height: 466px; position: absolute; left: 0; top: 0; transform-origin: 0 0; border-radius: 50%; overflow: hidden;
+  background: var(--black); color: var(--white); font-family: var(--f-num); user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+.screen button { font-family: var(--f-num); color: var(--white); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+.ring { position: absolute; inset: 0; pointer-events: none; }
+.ring circle { fill: none; }
+.ring .track { stroke: #1b2126; }
+.ring .prog { stroke: var(--cyan); stroke-linecap: round; transition: stroke .3s; }
+.ring.warn .prog { stroke: var(--amber); }
+.ring.over .prog { stroke: var(--red); animation: pulse 1s ease-in-out infinite; }
+.ring.rosc .prog { stroke: var(--green); }
+@keyframes pulse { 50% { opacity: .35; } }
+
+.hdr { position: absolute; left: 0; right: 0; top: 34px; text-align: center; pointer-events: none; z-index: 3; }
+.hdr .lbl { font-size: 17px; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
+.hdr .big { font-size: 66px; font-weight: 700; line-height: .95; font-variant-numeric: tabular-nums; }
+.hdr .big.over { color: var(--red); }
+.hdr .big.rosc { color: var(--green); }
+.hdr .sub { margin-top: 4px; display: flex; justify-content: center; gap: 10px; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hdr .sub span { padding: 1px 10px; border-radius: 999px; background: #161b20; }
+.hdr .sub .due { background: var(--red); color: var(--black); animation: pulse 1s ease-in-out infinite; }
+
+.pager { position: absolute; left: 0; top: 0; height: 466px; display: flex; transition: transform .22s ease-out; }
+.pager.drag { transition: none; }
+.page { width: 466px; height: 466px; position: relative; flex: none; }
+.grid { position: absolute; left: 70px; top: 170px; width: 326px; height: 222px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; }
+.act { position: relative; border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 22%, var(--black)); border-radius: 20px;
+  font-size: 27px; font-weight: 700; line-height: 1.02; letter-spacing: .01em; padding: 6px; white-space: pre-line; }
+.act:active { background: color-mix(in srgb, var(--c) 55%, var(--black)); transform: scale(.97); }
+.grid .act:nth-child(1) { border-top-left-radius: 46px; }
+.grid .act:nth-child(2) { border-top-right-radius: 46px; }
+.grid .act:nth-child(3) { border-bottom-left-radius: 52px; }
+.grid .act:nth-child(4) { border-bottom-right-radius: 52px; }
+.act .n { position: absolute; top: 8px; right: 50%; transform: translateX(50%); font-size: 17px; font-weight: 600; color: var(--c); letter-spacing: .06em; }
+.grid .act:nth-child(n+3) .n { top: auto; bottom: 10px; }
+.act.solid { background: var(--c); color: var(--black); }
+
+.dots { position: absolute; left: 0; right: 0; bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; z-index: 3; }
+.dots .d { display: flex; gap: 7px; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: #3a434c; }
+.dots i.on { background: var(--white); width: 20px; border-radius: 4px; }
+.dots .pname { font-size: 15px; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
+
+.list { position: absolute; left: 66px; right: 66px; top: 166px; bottom: 74px; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 6px; }
+.list::-webkit-scrollbar { display: none; }
+.item { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 8px; background: #11161a; border-radius: 14px; padding: 7px 12px; border-left: 4px solid var(--c); text-align: left; border-top: 0; border-right: 0; border-bottom: 0; font-family: var(--f-num); color: var(--white); width: 100%; }
+.item .t { font-size: 25px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.item .l { font-size: 22px; font-weight: 600; line-height: 1.05; }
+.item .w { display: block; font-size: 14px; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.item .del { grid-column: 1 / -1; background: var(--red); color: var(--black); border: 0; border-radius: 10px; font-size: 20px; font-weight: 700; padding: 6px; }
+.empty { text-align: center; color: var(--muted); font-size: 20px; margin-top: 40px; }
+
+.toast { position: absolute; left: 74px; right: 74px; top: 50px; min-height: 104px; z-index: 6; background: #f3f5f7; color: var(--black); border-radius: 26px; padding: 10px 12px 10px 18px;
+  display: flex; align-items: center; gap: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.6); }
+.toast .tx { flex: 1; min-width: 0; }
+.toast .a { font-size: 25px; font-weight: 700; line-height: 1.05; }
+.toast .adv { font-size: 18px; font-weight: 600; color: #8a4b00; line-height: 1.1; margin-top: 2px; }
+.toast .undo { background: var(--black); color: var(--white); border: 0; border-radius: 18px; font-size: 21px; font-weight: 700; padding: 12px 14px; }
+
+.ov { position: absolute; inset: 0; z-index: 8; background: rgba(0,0,0,.94); display: flex; flex-direction: column; align-items: center; }
+.ov .ttl { margin-top: 58px; font-size: 22px; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
+.ov .grid { top: 106px; height: 240px; }
+.ov .cancel { position: absolute; bottom: 40px; background: #1d2329; border: 0; border-radius: 999px; font-size: 22px; font-weight: 600; padding: 10px 34px; }
+.ov .act small { display: block; font-size: 16px; font-weight: 600; opacity: .8; margin-top: 4px; letter-spacing: .04em; }
+.confirm { text-align: center; padding: 0 70px; margin-top: 130px; }
+.confirm .q { font-size: 36px; font-weight: 700; line-height: 1.05; }
+.confirm .s { font-size: 20px; color: var(--muted); margin-top: 8px; font-family: var(--f-num); }
+.confirm .btns { display: flex; gap: 12px; justify-content: center; margin-top: 26px; }
+.confirm .btns button { border: 0; border-radius: 22px; font-size: 26px; font-weight: 700; padding: 18px 26px; min-width: 130px; }
+.b-gray { background: #262e36; }
+.b-red { background: var(--red); color: var(--black) !important; }
+.b-green { background: var(--green); color: var(--black) !important; }
+
+/* start / summary / history */
+.center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.brand { font-size: 22px; letter-spacing: .3em; font-weight: 600; color: var(--muted); }
+.startbtn { width: 214px; height: 214px; border-radius: 50%; border: 0; margin: 16px 0 14px; background: var(--red); color: var(--black) !important;
+  font-size: 44px; font-weight: 700; line-height: .95; box-shadow: 0 0 0 10px color-mix(in srgb, var(--red) 25%, transparent); }
+.startbtn:active { transform: scale(.97); }
+.startbtn small { display: block; font-size: 19px; letter-spacing: .1em; margin-top: 6px; }
+.ghost { background: #1a2026; border: 0; border-radius: 999px; font-size: 21px; font-weight: 600; padding: 9px 26px; }
+.disc { font-size: 14px; color: var(--muted); max-width: 250px; line-height: 1.15; margin-top: 12px; font-family: var(--f-num); }
+.sum .big { font-size: 64px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.sum .out { font-size: 26px; font-weight: 700; margin-top: 2px; }
+.sum .stats { display: flex; gap: 16px; margin: 14px 0 18px; font-size: 20px; color: var(--muted); }
+.sum .stats b { display: block; font-size: 32px; color: var(--white); }
+.sum .row { gap: 10px; justify-content: center; }
+.topbar { position: absolute; top: 60px; left: 0; right: 0; text-align: center; }
+.topbar .ttl { font-size: 22px; letter-spacing: .16em; font-weight: 600; color: var(--muted); }
+.back { position: absolute; top: 96px; left: 50%; transform: translateX(-50%); background: #1a2026; border: 0; border-radius: 999px; font-size: 19px; font-weight: 600; padding: 5px 20px; z-index: 4; }
+.hlist { top: 140px; }
+</style>
+
+<div class="layout">
+  <div class="stage">
+    <div class="bezel" id="bezel">
+      <div class="fit" id="fit"><div class="screen" id="screen"></div></div>
+    </div>
+    <div class="nav-row" aria-label="Navigasi halaman (desktop)">
+      <button class="chip-btn" id="prevBtn" aria-label="Halaman sebelumnya">‹ Swipe</button>
+      <span class="muted" style="font-size:13px">atau tombol panah keyboard</span>
+      <button class="chip-btn" id="nextBtn" aria-label="Halaman berikutnya">Swipe ›</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div>
+      <h1>Resusc Watch</h1>
+      <p class="muted">Prototipe v0.1 untuk Amazfit (Zepp OS), dibuat untuk menguji alur UI sebelum ditulis jadi kode jam.</p>
+    </div>
+
+    <div class="box">
+      <h2>Getar (simulasi)</h2>
+      <div class="vib" id="vib">Belum ada getar</div>
+      <p class="muted" style="font-size:13px">Pra-peringatan 10 dtk: 1× · Siklus habis: 2× panjang · Epi due: 3× pendek. Di HP Android, getaran asli juga ikut aktif.</p>
+    </div>
+
+    <div class="box">
+      <h2>Kecepatan waktu (untuk uji)</h2>
+      <div class="row" id="speedRow">
+        <button class="chip-btn" data-speed="1" aria-pressed="true">1×</button>
+        <button class="chip-btn" data-speed="10" aria-pressed="false">10×</button>
+        <button class="chip-btn" data-speed="30" aria-pressed="false">30×</button>
+        <button class="chip-btn" id="jumpBtn">+30 dtk</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>Cara coba</h2>
+      <ul>
+        <li><b>START CODE</b> langsung memulai total waktu dan siklus CPR 2 menit (ring di tepi layar).</li>
+        <li>Swipe kiri/kanan: <b>Main → Drugs → Airway &amp; Access → Team &amp; Events → Log</b>. Header timer selalu terlihat.</li>
+        <li><b>Rhythm Check</b>: pilih ritme, lalu siklus CPR baru otomatis dimulai.</li>
+        <li>Setiap tap memunculkan konfirmasi + <b>UNDO</b> selama 5 detik. Di halaman Log, tap event untuk menghapus.</li>
+        <li>Timer Epi dihitung dari dosis terakhir; status <b>DUE</b> muncul di 3:00.</li>
+        <li>Saran (advice) muncul di toast, tidak pernah memblokir.</li>
+        <li>Sesi yang selesai tersimpan di <b>Riwayat</b> (hanya di browser ini).</li>
+      </ul>
+    </div>
+
+    <div class="box">
+      <h2>Yang ingin saya dengar dari Anda</h2>
+      <ul>
+        <li>Susunan dan isi 4 halaman tombol: ada yang perlu dipindah, ditambah, atau dibuang?</li>
+        <li>Ukuran tombol dan teks: masih nyaman untuk tap cepat?</li>
+        <li>Alur Rhythm Check → siklus baru: sesuai praktik Anda?</li>
+        <li>Teks saran: terlalu banyak atau kurang?</li>
+      </ul>
+    </div>
+
+    <div class="row">
+      <button class="chip-btn" id="resetBtn">Hapus semua riwayat</button>
+      <span class="muted" id="resetMsg" style="font-size:13px"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var CYCLE_MS = 120000, PRE_MS = 10000, EPI_MS = 180000, TOAST_MS = 5000, HKEY = 'resusc-watch-history-v1';
+
+  var DEF = {
+    start:   { label: 'Start CPR',      c: 'cyan' },
+    rhythm:  { label: 'Rhythm',         c: 'cyan' },
+    shock:   { label: 'Shock',          c: 'amber',  num: true },
+    epi:     { label: 'Epinephrine',    c: 'red',    num: true },
+    amio:    { label: 'Amiodarone',     c: 'violet', num: true },
+    lido:    { label: 'Lidocaine',      c: 'blue',   num: true },
+    mg:      { label: 'MgSO₄',          c: 'blue',   num: true },
+    bicarb:  { label: 'Bicarbonate',    c: 'blue',   num: true },
+    calcium: { label: 'Calcium',        c: 'blue',   num: true },
+    iv:      { label: 'IV access',      c: 'sand' },
+    io:      { label: 'IO access',      c: 'sand' },
+    sga:     { label: 'SGA',            c: 'sand' },
+    ett:     { label: 'ETT',            c: 'sand' },
+    swap:    { label: 'Ganti kompresor', c: 'slate', num: true },
+    other:   { label: 'Tindakan lain',  c: 'slate',  num: true },
+    rosc:    { label: 'ROSC',           c: 'green' },
+    rearrest:{ label: 'Re-arrest',      c: 'red' },
+    stop:    { label: 'Stop',           c: 'red' }
+  };
+
+  var PAGES = [
+    { name: 'MAIN', items: [
+      { k: 'rhythm', t: 'Rhythm\nCheck' }, { k: 'shock', t: 'Shock' },
+      { k: 'epi', t: 'Epinephrine' }, { k: 'amio', t: 'Amiodarone' } ] },
+    { name: 'DRUGS', items: [
+      { k: 'lido', t: 'Lidocaine' }, { k: 'mg', t: 'MgSO₄' },
+      { k: 'bicarb', t: 'Bicarbonate' }, { k: 'calcium', t: 'Calcium' } ] },
+    { name: 'AIRWAY · ACCESS', items: [
+      { k: 'iv', t: 'IV' }, { k: 'io', t: 'IO' },
+      { k: 'sga', t: 'SGA' }, { k: 'ett', t: 'ETT' } ] },
+    { name: 'TEAM · EVENTS', items: [
+      { k: 'swap', t: 'Ganti\nKompresor' }, { k: 'other', t: 'Tindakan\nLain' },
+      { k: 'rosc', t: 'ROSC' }, { k: 'stop', t: 'Stop\nTOD' } ] },
+    { name: 'LOG', log: true }
+  ];
+
+  var S = { view: 'start', page: 0, session: null, overlay: null, toast: null, sim: 0, speed: 1, fired: {}, openItem: null, histIdx: null, dragged: false };
+  var screen = document.getElementById('screen');
+  var uid = 0;
+
+  // ---------- helpers ----------
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function fmt(ms) {
+    var neg = ms < 0; ms = Math.abs(ms);
+    var s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    var out = h ? h + ':' + pad(m) + ':' + pad(s % 60) : m + ':' + pad(s % 60);
+    return (neg ? '+' : '') + out;
+  }
+  function clock(sess, t) { var d = new Date(sess.wallStart + t); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+  function dateStr(ms) { var d = new Date(ms); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function col(k) { return 'var(--' + (DEF[k] ? DEF[k].c : 'slate') + ')'; }
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function now() { return S.session ? S.sim - S.session.simStart : 0; }
+
+  function loadHist() { try { return JSON.parse(localStorage.getItem(HKEY) || '[]'); } catch (e) { return []; } }
+  function saveHist(h) { try { localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 20))); } catch (e) {} }
+
+  // Event-sourced: every number on screen is derived from the event list, so undo/delete is always consistent.
+  function derive(events, t) {
+    var d = { cprStart: 0, cycleId: 'none', rosc: false, roscAt: 0, lastEpi: null, counts: {}, lastRhythm: null };
+    events.forEach(function (e) {
+      d.counts[e.type] = (d.counts[e.type] || 0) + 1;
+      if (e.type === 'start' || e.type === 'rearrest' || e.type === 'rhythm') { d.cprStart = e.t; d.cycleId = e.id; d.rosc = false; }
+      if (e.type === 'rhythm') d.lastRhythm = e.v;
+      if (e.type === 'rosc') { d.rosc = true; d.roscAt = e.t; }
+      if (e.type === 'epi') d.lastEpi = e;
+    });
+    d.cycleRem = CYCLE_MS - (t - d.cprStart);
+    d.epiSince = d.lastEpi ? t - d.lastEpi.t : null;
+    return d;
+  }
+  function labels(events) {
+    var n = {}, out = {};
+    events.forEach(function (e) {
+      n[e.type] = (n[e.type] || 0) + 1;
+      var def = DEF[e.type] || { label: e.type };
+      var l = def.label;
+      if (e.type === 'rhythm') l = 'Rhythm: ' + e.v;
+      else if (e.type === 'stop') l = e.v === 'ROSC' ? 'Selesai (ROSC)' : 'Stop · TOD';
+      else if (def.num) l += ' #' + n[e.type];
+      out[e.id] = l;
+    });
+    return out;
+  }
+
+  // ---------- vibration ----------
+  var VIB = {
+    pre:   { p: [200], txt: '1× · 10 detik lagi rhythm check' },
+    cycle: { p: [600, 200, 600], txt: '2× panjang · Siklus 2 menit habis' },
+    epi:   { p: [150, 100, 150, 100, 150], txt: '3× pendek · Epinephrine due' }
+  };
+  function vibrate(kind) {
+    var v = VIB[kind];
+    try { if (navigator.vibrate) navigator.vibrate(v.p); } catch (e) {}
+    var b = document.getElementById('bezel');
+    b.classList.remove('buzz'); void b.offsetWidth; b.classList.add('buzz');
+    var vEl = document.getElementById('vib');
+    vEl.textContent = '≋ ' + v.txt; vEl.classList.add('on');
+    setTimeout(function () { vEl.classList.remove('on'); }, 2500);
+  }
+
+  // ---------- actions ----------
+  function log(type, v) {
+    var t = now();
+    var e = { id: 'e' + (++uid) + '_' + Date.now().toString(36), type: type, t: t };
+    if (v) e.v = v;
+    S.session.events.push(e);
+    var d = derive(S.session.events, t);
+    showToast(e, advice(e, d));
+    render();
+  }
+  function advice(e, d) {
+    var c = d.counts;
+    if (e.type === 'rhythm') {
+      if (e.v === 'VF/pVT') return 'Shockable → Shock, lanjut CPR';
+      return (c.epi ? 'Non-shockable → lanjut CPR' : 'Non-shockable → Epi ASAP');
+    }
+    if (e.type === 'shock') {
+      if (c.shock === 2 && !c.epi) return 'Pertimbangkan Epinephrine';
+      if (c.shock === 3 && !c.amio) return 'Pertimbangkan Amiodarone';
+      if (c.shock === 5 && c.amio === 1) return 'Pertimbangkan Amiodarone ke-2';
+    }
+    if (e.type === 'epi') return 'Pengingat berikutnya 3:00';
+    if (e.type === 'rosc') return 'Post-ROSC care';
+    if (e.type === 'rearrest') return 'Siklus CPR baru dimulai';
+    return '';
+  }
+  function showToast(e, adv) {
+    clearTimeout(S.toastTimer);
+    S.toast = { id: e.id, adv: adv };
+    S.toastTimer = setTimeout(function () { S.toast = null; render(); }, adv ? TOAST_MS + 1500 : TOAST_MS);
+  }
+  function undo(id) {
+    S.session.events = S.session.events.filter(function (e) { return e.id !== id; });
+    S.toast = null; clearTimeout(S.toastTimer); render();
+  }
+  function startSession() {
+    S.session = { id: Date.now(), wallStart: Date.now(), simStart: S.sim, events: [] };
+    S.fired = {}; S.page = 0; S.view = 'run';
+    log('start');
+  }
+  function stopSession() {
+    var d = derive(S.session.events, now());
+    log('stop', d.rosc ? 'ROSC' : 'TOD');
+    S.toast = null; clearTimeout(S.toastTimer);
+    S.session.duration = now();
+    S.session.outcome = d.rosc ? 'ROSC' : 'TOD';
+    var h = loadHist(); h.unshift({ id: S.session.id, wallStart: S.session.wallStart, duration: S.session.duration, outcome: S.session.outcome, events: S.session.events });
+    saveHist(h);
+    S.overlay = null; S.view = 'summary'; render();
+  }
+  function tap(k) {
+    if (S.dragged) return;
+    var d = derive(S.session.events, now());
+    if (k === 'rhythm') { S.overlay = 'rhythm'; render(); return; }
+    if (k === 'stop') { S.overlay = 'stop'; render(); return; }
+    if (k === 'rosc') { log(d.rosc ? 'rearrest' : 'rosc'); return; }
+    log(k);
+  }
+
+  // ---------- render ----------
+  function render() {
+    screen.innerHTML = '';
+    if (S.view === 'start') return renderStart();
+    if (S.view === 'run') return renderRun();
+    if (S.view === 'summary') return renderSummary();
+    if (S.view === 'history') return renderHistory();
+    if (S.view === 'histlog') return renderHistLog();
+  }
+
+  function renderStart() {
+    var c = el('div', 'center');
+    c.appendChild(el('div', 'brand', 'RESUSC'));
+    var b = el('button', 'startbtn', 'START<br>CODE<small>CPR MULAI</small>');
+    b.onclick = startSession;
+    c.appendChild(b);
+    var h = el('button', 'ghost', 'Riwayat (' + loadHist().length + ')');
+    h.onclick = function () { S.view = 'history'; render(); };
+    c.appendChild(h);
+    c.appendChild(el('div', 'disc', 'Alat bantu timer & pencatatan. Bukan perangkat medis. Keputusan klinis tetap di tangan Anda.'));
+    screen.appendChild(c);
+  }
+
+  var R = {};
+  function renderRun() {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 466 466'); svg.setAttribute('class', 'ring');
+    var C = 2 * Math.PI * 224;
+    ['track', 'prog'].forEach(function (cls) {
+      var ci = document.createElementNS(ns, 'circle');
+      ci.setAttribute('cx', 233); ci.setAttribute('cy', 233); ci.setAttribute('r', 224);
+      ci.setAttribute('stroke-width', 13); ci.setAttribute('class', cls);
+      if (cls === 'prog') { ci.setAttribute('stroke-dasharray', C); ci.setAttribute('transform', 'rotate(-90 233 233)'); R.prog = ci; }
+      svg.appendChild(ci);
+    });
+    R.ring = svg; R.C = C;
+    screen.appendChild(svg);
+
+    var hdr = el('div', 'hdr');
+    R.lbl = el('div', 'lbl', 'CYCLE'); R.big = el('div', 'big', '2:00');
+    var sub = el('div', 'sub'); R.total = el('span', '', ''); R.epi = el('span', '', '');
+    sub.appendChild(R.total); sub.appendChild(R.epi);
+    hdr.appendChild(R.lbl); hdr.appendChild(R.big); hdr.appendChild(sub);
+    screen.appendChild(hdr);
+
+    var pager = el('div', 'pager'); pager.style.width = (466 * PAGES.length) + 'px';
+    pager.style.transform = 'translateX(' + (-S.page * 466) + 'px)';
+    R.pager = pager; R.btn = {};
+    var d = derive(S.session.events, now());
+    PAGES.forEach(function (p) {
+      var pg = el('div', 'page');
+      if (p.log) { pg.appendChild(buildList(S.session, true)); }
+      else {
+        var g = el('div', 'grid');
+        p.items.forEach(function (it) {
+          var b = el('button', 'act');
+          var k = it.k, txt = it.t, c = col(k);
+          if (k === 'rosc' && d.rosc) { txt = 'Re-\narrest'; c = col('rearrest'); }
+          if (k === 'stop') b.classList.add('solid');
+          b.style.setProperty('--c', c);
+          b.textContent = txt;
+          if (DEF[k] && DEF[k].num && d.counts[k]) b.appendChild(el('span', 'n', '×' + d.counts[k]));
+          b.onclick = function () { tap(k); };
+          g.appendChild(b);
+        });
+        pg.appendChild(g);
+      }
+      pager.appendChild(pg);
+    });
+    screen.appendChild(pager);
+
+    var dots = el('div', 'dots'); var dd = el('div', 'd');
+    PAGES.forEach(function (p, i) { dd.appendChild(el('i', i === S.page ? 'on' : '')); });
+    dots.appendChild(dd); dots.appendChild(el('div', 'pname', PAGES[S.page].name));
+    screen.appendChild(dots);
+
+    if (S.toast) renderToast();
+    if (S.overlay === 'rhythm') renderRhythm();
+    if (S.overlay === 'stop') renderStop(d);
+    update();
+  }
+
+  function buildList(sess, editable) {
+    var list = el('div', 'list' + (editable ? '' : ' hlist'));
+    var L = labels(sess.events);
+    var evs = sess.events.slice().reverse();
+    if (!evs.length) list.appendChild(el('div', 'empty', 'Belum ada event'));
+    evs.forEach(function (e) {
+      var it = el('button', 'item');
+      it.style.setProperty('--c', col(e.type));
+      it.appendChild(el('span', 't', fmt(e.t)));
+      var l = el('span', 'l'); l.textContent = L[e.id];
+      l.appendChild(el('span', 'w', clock(sess, e.t)));
+      it.appendChild(l);
+      if (editable && S.openItem === e.id && e.type !== 'start') {
+        var del = el('span', 'del', 'Hapus event ini');
+        del.onclick = function (ev) { ev.stopPropagation(); S.openItem = null; undo(e.id); };
+        it.appendChild(del);
+      }
+      if (editable) it.onclick = function () { if (S.dragged) return; S.openItem = S.openItem === e.id ? null : e.id; render(); };
+      list.appendChild(it);
+    });
+    return list;
+  }
+
+  function renderToast() {
+    var ev = S.session.events.filter(function (e) { return e.id === S.toast.id; })[0];
+    if (!ev) return;
+    var L = labels(S.session.events);
+    var t = el('div', 'toast');
+    var tx = el('div', 'tx');
+    tx.appendChild(el('div', 'a', '✓ ' + L[ev.id]));
+    if (S.toast.adv) tx.appendChild(el('div', 'adv', S.toast.adv));
+    t.appendChild(tx);
+    if (ev.type !== 'start') {
+      var u = el('button', 'undo', 'UNDO');
+      u.onclick = function () { undo(ev.id); };
+      t.appendChild(u);
+    }
+    screen.appendChild(t);
+  }
+
+  function renderRhythm() {
+    var ov = el('div', 'ov');
+    ov.appendChild(el('div', 'ttl', 'RHYTHM'));
+    var g = el('div', 'grid');
+    [['VF/pVT', 'amber', 'SHOCKABLE'], ['PEA', 'cyan', 'NON-SHOCK'], ['Asystole', 'cyan', 'NON-SHOCK'], ['ROSC', 'green', 'NADI +']].forEach(function (r) {
+      var b = el('button', 'act', r[0] + '<small>' + r[2] + '</small>');
+      b.style.setProperty('--c', 'var(--' + r[1] + ')');
+      b.onclick = function () { S.overlay = null; if (r[0] === 'ROSC') log('rosc'); else log('rhythm', r[0]); };
+      g.appendChild(b);
+    });
+    ov.appendChild(g);
+    var c = el('button', 'cancel', 'Batal');
+    c.onclick = function () { S.overlay = null; render(); };
+    ov.appendChild(c);
+    screen.appendChild(ov);
+  }
+
+  function renderStop(d) {
+    var ov = el('div', 'ov');
+    var c = el('div', 'confirm');
+    c.appendChild(el('div', 'q', d.rosc ? 'Akhiri sesi?' : 'Stop resusitasi?'));
+    c.appendChild(el('div', 's', d.rosc ? 'Status akhir: ROSC' : 'Waktu TOD dicatat sekarang'));
+    var bs = el('div', 'btns');
+    var no = el('button', 'b-gray', 'Batal'); no.onclick = function () { S.overlay = null; render(); };
+    var yes = el('button', d.rosc ? 'b-green' : 'b-red', 'Stop'); yes.onclick = stopSession;
+    bs.appendChild(no); bs.appendChild(yes); c.appendChild(bs);
+    ov.appendChild(c);
+    screen.appendChild(ov);
+  }
+
+  function renderSummary() {
+    var s = S.session, d = derive(s.events, s.duration), c = d.counts;
+    var w = el('div', 'center sum');
+    w.appendChild(el('div', 'brand', 'SESI SELESAI'));
+    w.appendChild(el('div', 'big', fmt(s.duration)));
+    var out = el('div', 'out', s.outcome === 'ROSC' ? 'ROSC' : 'TOD ' + clock(s, s.duration).slice(0, 5));
+    out.style.color = s.outcome === 'ROSC' ? 'var(--green)' : 'var(--red)';
+    w.appendChild(out);
+    w.appendChild(el('div', 'stats', '<div><b>' + (c.shock || 0) + '</b>Shock</div><div><b>' + (c.epi || 0) + '</b>Epi</div><div><b>' + (c.amio || 0) + '</b>Amio</div>'));
+    var row = el('div', 'row');
+    var lg = el('button', 'ghost', 'Lihat log'); lg.onclick = function () { S.histIdx = 0; S.view = 'histlog'; render(); };
+    var done = el('button', 'ghost', 'Selesai'); done.onclick = function () { S.session = null; S.view = 'start'; render(); };
+    row.appendChild(lg); row.appendChild(done); w.appendChild(row);
+    screen.appendChild(w);
+  }
+
+  function renderHistory() {
+    var h = loadHist();
+    var top = el('div', 'topbar'); top.appendChild(el('div', 'ttl', 'RIWAYAT'));
+    screen.appendChild(top);
+    var back = el('button', 'back', '‹ Kembali'); back.onclick = function () { S.view = 'start'; render(); };
+    screen.appendChild(back);
+    var list = el('div', 'list hlist');
+    if (!h.length) list.appendChild(el('div', 'empty', 'Belum ada sesi tersimpan'));
+    h.forEach(function (s, i) {
+      var it = el('button', 'item');
+      it.style.setProperty('--c', s.outcome === 'ROSC' ? 'var(--green)' : 'var(--red)');
+      it.appendChild(el('span', 't', fmt(s.duration)));
+      var l = el('span', 'l', s.outcome); l.appendChild(el('span', 'w', dateStr(s.wallStart) + ' · ' + s.events.length + ' event'));
+      it.appendChild(l);
+      it.onclick = function () { S.histIdx = i; S.view = 'histlog'; render(); };
+      list.appendChild(it);
+    });
+    screen.appendChild(list);
+  }
+
+  function renderHistLog() {
+    var s = loadHist()[S.histIdx];
+    if (!s) { S.view = 'history'; return render(); }
+    var top = el('div', 'topbar'); top.appendChild(el('div', 'ttl', dateStr(s.wallStart)));
+    screen.appendChild(top);
+    var back = el('button', 'back', '‹ Riwayat'); back.onclick = function () { S.view = 'history'; render(); };
+    screen.appendChild(back);
+    screen.appendChild(buildList(s, false));
+  }
+
+  // ---------- per-tick update (text only, no rebuild) ----------
+  function update() {
+    if (S.view !== 'run' || !R.big) return;
+    var t = now(), d = derive(S.session.events, t);
+    R.total.textContent = 'TOTAL ' + fmt(t);
+    if (d.lastEpi) {
+      var due = d.epiSince >= EPI_MS;
+      R.epi.textContent = due ? 'EPI DUE ' + fmt(d.epiSince) : 'EPI ' + fmt(d.epiSince);
+      R.epi.className = due && !d.rosc ? 'due' : '';
+    } else { R.epi.textContent = 'EPI —'; R.epi.className = ''; }
+    R.ring.setAttribute('class', 'ring');
+    R.big.className = 'big';
+    if (d.rosc) {
+      R.lbl.textContent = 'ROSC'; R.big.textContent = fmt(t - d.roscAt); R.big.classList.add('rosc');
+      R.ring.classList.add('rosc'); R.prog.setAttribute('stroke-dashoffset', 0);
+    } else {
+      var rem = d.cycleRem;
+      R.lbl.textContent = rem <= 0 ? 'RHYTHM CHECK' : 'CYCLE';
+      R.big.textContent = fmt(rem);
+      if (rem <= 0) { R.big.classList.add('over'); R.ring.classList.add('over'); }
+      else if (rem <= PRE_MS) R.ring.classList.add('warn');
+      R.prog.setAttribute('stroke-dashoffset', R.C * (1 - Math.max(0, rem) / CYCLE_MS));
+      if (rem <= PRE_MS && rem > 0 && !S.fired[d.cycleId + 'pre']) { S.fired[d.cycleId + 'pre'] = 1; vibrate('pre'); }
+      if (rem <= 0 && !S.fired[d.cycleId + 'end']) { S.fired[d.cycleId + 'pre'] = 1; S.fired[d.cycleId + 'end'] = 1; vibrate('cycle'); }
+      if (d.lastEpi && d.epiSince >= EPI_MS && !S.fired['epi' + d.lastEpi.id]) { S.fired['epi' + d.lastEpi.id] = 1; vibrate('epi'); }
+    }
+  }
+
+  // ---------- clock ----------
+  var last = performance.now();
+  setInterval(function () {
+    var n = performance.now(); S.sim += (n - last) * S.speed; last = n; update();
+  }, 200);
+
+  // ---------- swipe ----------
+  var sx = 0, sy = 0, dx = 0, mode = null;
+  screen.addEventListener('pointerdown', function (e) { sx = e.clientX; sy = e.clientY; dx = 0; mode = null; S.dragged = false; });
+  screen.addEventListener('pointermove', function (e) {
+    if (S.view !== 'run' || S.overlay || e.buttons === 0 && e.pointerType === 'mouse') return;
+    var scale = 466 / document.getElementById('fit').offsetWidth;
+    var mx = (e.clientX - sx) * scale, my = (e.clientY - sy) * scale;
+    if (!mode && (Math.abs(mx) > 12 || Math.abs(my) > 12)) mode = Math.abs(mx) > Math.abs(my) ? 'x' : 'y';
+    if (mode === 'x' && R.pager) {
+      dx = mx; S.dragged = true;
+      R.pager.classList.add('drag');
+      R.pager.style.transform = 'translateX(' + (-S.page * 466 + dx) + 'px)';
+    }
+  });
+  function endDrag() {
+    if (mode === 'x' && R.pager) {
+      var p = S.page;
+      if (dx < -60 && p < PAGES.length - 1) p++;
+      if (dx > 60 && p > 0) p--;
+      goPage(p);
+      setTimeout(function () { S.dragged = false; }, 50);
+    }
+    mode = null;
+  }
+  screen.addEventListener('pointerup', endDrag);
+  screen.addEventListener('pointercancel', endDrag);
+  function goPage(p) {
+    S.page = Math.max(0, Math.min(PAGES.length - 1, p));
+    S.openItem = null;
+    if (S.view === 'run') render();
+  }
+  document.getElementById('prevBtn').onclick = function () { goPage(S.page - 1); };
+  document.getElementById('nextBtn').onclick = function () { goPage(S.page + 1); };
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft') goPage(S.page - 1);
+    if (e.key === 'ArrowRight') goPage(S.page + 1);
+  });
+
+  // ---------- panel controls ----------
+  Array.prototype.forEach.call(document.querySelectorAll('[data-speed]'), function (b) {
+    b.onclick = function () {
+      S.speed = +b.getAttribute('data-speed');
+      Array.prototype.forEach.call(document.querySelectorAll('[data-speed]'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    };
+  });
+  document.getElementById('jumpBtn').onclick = function () { S.sim += 30000; update(); };
+  document.getElementById('resetBtn').onclick = function () {
+    saveHist([]); document.getElementById('resetMsg').textContent = 'Riwayat dihapus';
+    if (S.view === 'start' || S.view === 'history') render();
+  };
+
+  // ---------- scale watch to viewport ----------
+  function fitWatch() {
+    var size = Math.min(window.innerWidth - 60, 420);
+    size = Math.max(260, size);
+    document.getElementById('bezel').style.setProperty('--size', size + 'px');
+    screen.style.transform = 'scale(' + (size / 466) + ')';
+  }
+  window.addEventListener('resize', fitWatch);
+  fitWatch();
+  render();
+})();
+</script>
