@@ -86,6 +86,11 @@ body {
 .act { position: relative; border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 22%, var(--black)); border-radius: 20px;
   font-size: 27px; font-weight: 700; line-height: 1.02; letter-spacing: .01em; padding: 6px; white-space: pre-line; }
 .act:active { background: color-mix(in srgb, var(--c) 55%, var(--black)); transform: scale(.97); }
+/* Hold-to-log: a fill sweeps across the button for HOLD_MS; release early and nothing is logged */
+.act::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--c); opacity: .5; transform: scaleX(0); transform-origin: left; pointer-events: none; }
+.act.solid::after { background: var(--white); opacity: .4; }
+.act.holding::after { transform: scaleX(1); transition: transform .3s linear; }
+@media (prefers-reduced-motion: reduce) { .act.holding::after { transition: none; transform: scaleX(1); } }
 .grid .act:nth-child(1) { border-top-left-radius: 46px; }
 .grid .act:nth-child(2) { border-top-right-radius: 46px; }
 .grid .act:nth-child(3) { border-bottom-left-radius: 52px; }
@@ -106,6 +111,8 @@ body {
 .item .t { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .item .l { font-size: 22px; font-weight: 600; line-height: 1.05; }
 .item .w { display: block; font-size: 14px; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.sec { font-size: 16px; font-weight: 600; letter-spacing: .14em; color: var(--muted); text-align: center; margin: 6px 0 0; }
+.item.met .t { font-size: 24px; color: var(--c); }
 .item .del { grid-column: 1 / -1; background: var(--red); color: var(--black); border: 0; border-radius: 10px; font-size: 20px; font-weight: 700; padding: 6px; }
 .empty { text-align: center; color: var(--muted); font-size: 20px; margin-top: 40px; }
 
@@ -118,8 +125,11 @@ body {
 .hdr .lbl.adv { color: var(--amber); font-size: 19px; letter-spacing: .02em; white-space: nowrap; }
 
 .ov { position: absolute; inset: 0; z-index: 8; background: var(--black); display: flex; flex-direction: column; align-items: center; }
-.ov .ttl { margin-top: 58px; font-size: 22px; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
-.ov .grid { top: 106px; height: 240px; }
+.ov .pz { margin-top: 2px; font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: var(--white); }
+.ov .pz.long { color: var(--red); animation: pulse 1s ease-in-out infinite; }
+.ov .pz small { font-size: 18px; letter-spacing: .14em; color: var(--muted); margin-right: 6px; }
+.ov .ttl { margin-top: 34px; font-size: 17px !important; font-size: 22px; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
+.ov .grid { top: 112px; height: 236px; }
 .ov .cancel { position: absolute; bottom: 40px; background: #1d2329; border: 0; border-radius: 999px; font-size: 22px; font-weight: 600; padding: 10px 34px; }
 .ov .act small { display: block; font-size: 16px; font-weight: 600; opacity: .8; margin-top: 4px; letter-spacing: .04em; }
 .confirm { text-align: center; padding: 0 70px; margin-top: 130px; }
@@ -172,7 +182,7 @@ body {
     <div class="box">
       <h2>Getar (simulasi)</h2>
       <div class="vib" id="vib">Belum ada getar</div>
-      <p class="muted" style="font-size:13px">Pra-peringatan 10 dtk: 1× · Siklus habis: 2× panjang · Epi due: 3× pendek. Di HP Android, getaran asli juga ikut aktif.</p>
+      <p class="muted" style="font-size:13px">Pra-peringatan 10 dtk: 1× · Siklus habis: 2× panjang · Epi due: 3× pendek · Jeda ≥ 10 dtk: 1× sangat panjang. Di HP Android, getaran asli juga ikut aktif.</p>
     </div>
 
     <div class="box">
@@ -191,7 +201,10 @@ body {
         <li><b>START CODE</b> langsung memulai total waktu dan siklus CPR 2 menit (ring di tepi layar).</li>
         <li>Swipe kiri/kanan: <b>Main → Drugs → Airway &amp; Access → Team &amp; Events → Log</b>. Header timer selalu terlihat.</li>
         <li>Saat siklus 2 menit habis, layar <b>Rhythm Check</b> muncul otomatis. Pilih ritme, lalu siklus baru dimulai dan layar kembali ke Main. Untuk cek ritme lebih awal, gunakan tombol Rhythm Check di halaman Team &amp; Events.</li>
-        <li>Setiap tap memunculkan konfirmasi + <b>UNDO</b> selama 5 detik. Di halaman Log, tap event untuk menghapus.</li>
+        <li><b>Tahan tombol ±0,3 detik</b> untuk mencatat (ada isian warna + getar singkat). Tap sekilas tidak tercatat, jadi sentuhan pergelangan saat kompresi aman.</li>
+        <li>Setelah tercatat, pill <b>UNDO</b> muncul 5 detik. Di halaman Log, tap event untuk menghapus.</li>
+        <li>Layar Rhythm Check menghitung <b>JEDA</b> kompresi. Di 10 detik jam bergetar panjang dan angka jadi merah.</li>
+        <li>Ringkasan sesi menampilkan <b>CPR fraction</b>; buka <b>Detail &amp; log</b> untuk jeda rata-rata/terlama, jumlah siklus, time to first shock dan first epi.</li>
         <li>Timer Epi menghitung mundur 3:00 dari dosis terakhir; setelah habis berubah jadi <b>EPI DUE</b> dan menghitung waktu lewat.</li>
         <li>Saran (advice) muncul sebentar di baris kecil di atas timer, tidak pernah memblokir.</li>
         <li>Sesi yang selesai tersimpan di <b>Riwayat</b> (hanya di browser ini).</li>
@@ -218,7 +231,7 @@ body {
 <script>
 (function () {
   'use strict';
-  var CYCLE_MS = 120000, PRE_MS = 10000, EPI_MS = 180000, TOAST_MS = 5000, HKEY = 'resusc-watch-history-v1';
+  var CYCLE_MS = 120000, PRE_MS = 10000, PAUSE_MS = 10000, HOLD_MS = 300, EPI_MS = 180000, TOAST_MS = 5000, HKEY = 'resusc-watch-history-v1';
 
   var DEF = {
     start:   { label: 'Start CPR',      c: 'cyan' },
@@ -257,7 +270,7 @@ body {
     { name: 'LOG', log: true }
   ];
 
-  var S = { view: 'start', page: 0, session: null, overlay: null, toast: null, sim: 0, speed: 1, fired: {}, openItem: null, histIdx: null, dragged: false };
+  var S = { view: 'start', page: 0, session: null, overlay: null, toast: null, sim: 0, speed: 1, fired: {}, openItem: null, histIdx: null, dragged: false, hintUntil: 0, pauseStart: null };
   var screen = document.getElementById('screen');
   var uid = 0;
 
@@ -312,15 +325,41 @@ body {
     return out;
   }
 
+  // Quality metrics for debriefing, all derived from the log and the recorded pauses.
+  function metrics(s) {
+    var ev = s.events, end = s.duration, arrest = 0, inArrest = true, seg = 0;
+    ev.forEach(function (e) {
+      if (e.type === 'rosc' && inArrest) { arrest += e.t - seg; inArrest = false; }
+      if (e.type === 'rearrest' && !inArrest) { seg = e.t; inArrest = true; }
+    });
+    if (inArrest) arrest += end - seg;
+    var ps = (s.pauses || []).map(function (p) { return p.end - p.start; });
+    var tot = ps.reduce(function (a, b) { return a + b; }, 0);
+    function first(type) { var e = ev.filter(function (x) { return x.type === type; })[0]; return e ? e.t : null; }
+    return {
+      ccf: arrest > 0 ? Math.max(0, 1 - tot / arrest) : null,
+      pauses: ps.length, pauseTot: tot,
+      pauseAvg: ps.length ? tot / ps.length : null,
+      pauseMax: ps.length ? Math.max.apply(null, ps) : null,
+      cycles: ev.filter(function (x) { return x.type === 'start' || x.type === 'rhythm' || x.type === 'rearrest'; }).length,
+      firstShock: first('shock'), firstEpi: first('epi')
+    };
+  }
+  function ccfColor(c) { return c == null ? 'var(--slate)' : c >= .8 ? 'var(--green)' : c >= .6 ? 'var(--amber)' : 'var(--red)'; }
+  function sec(ms) { return ms == null ? '—' : (ms / 1000).toFixed(1).replace('.', ',') + ' s'; }
+
   // ---------- vibration ----------
   var VIB = {
     pre:   { p: [200], txt: '1× · 10 detik lagi rhythm check' },
     cycle: { p: [600, 200, 600], txt: '2× panjang · Siklus 2 menit habis' },
-    epi:   { p: [150, 100, 150, 100, 150], txt: '3× pendek · Epinephrine due' }
+    epi:   { p: [150, 100, 150, 100, 150], txt: '3× pendek · Epinephrine due' },
+    pause: { p: [900], txt: '1× sangat panjang · Jeda kompresi ≥ 10 detik' },
+    tick:  { p: [35], txt: '' }
   };
   function vibrate(kind) {
     var v = VIB[kind];
     try { if (navigator.vibrate) navigator.vibrate(v.p); } catch (e) {}
+    if (!v.txt) return;
     var b = document.getElementById('bezel');
     b.classList.remove('buzz'); void b.offsetWidth; b.classList.add('buzz');
     var vEl = document.getElementById('vib');
@@ -364,7 +403,7 @@ body {
     S.toast = null; clearTimeout(S.toastTimer); render();
   }
   function startSession() {
-    S.session = { id: Date.now(), wallStart: Date.now(), simStart: S.sim, events: [] };
+    S.session = { id: Date.now(), wallStart: Date.now(), simStart: S.sim, events: [], pauses: [] };
     S.fired = {}; S.page = 0; S.view = 'run';
     log('start');
   }
@@ -374,17 +413,41 @@ body {
     S.toast = null; clearTimeout(S.toastTimer);
     S.session.duration = now();
     S.session.outcome = d.rosc ? 'ROSC' : 'TOD';
-    var h = loadHist(); h.unshift({ id: S.session.id, wallStart: S.session.wallStart, duration: S.session.duration, outcome: S.session.outcome, events: S.session.events });
+    var h = loadHist(); h.unshift({ id: S.session.id, wallStart: S.session.wallStart, duration: S.session.duration, outcome: S.session.outcome, events: S.session.events, pauses: S.session.pauses });
     saveHist(h);
     S.overlay = null; S.view = 'summary'; render();
+  }
+  // Rhythm check = hands-off time. Pauses are kept apart from events so undoing a rhythm entry never erases a real pause.
+  function openRhythm() { S.overlay = 'rhythm'; S.openItem = null; S.pauseStart = now(); }
+  function closeRhythm() {
+    if (S.pauseStart != null) S.session.pauses.push({ start: S.pauseStart, end: now() });
+    S.pauseStart = null; S.overlay = null;
   }
   function tap(k) {
     if (S.dragged) return;
     var d = derive(S.session.events, now());
-    if (k === 'rhythm') { S.overlay = 'rhythm'; render(); return; }
+    if (k === 'rhythm') { openRhythm(); render(); return; }
     if (k === 'stop') { S.overlay = 'stop'; render(); return; }
     if (k === 'rosc') { log(d.rosc ? 'rearrest' : 'rosc'); return; }
     log(k);
+  }
+
+  // ---------- hold to log ----------
+  var hold = null;
+  function startHold(b, k) {
+    cancelHold();
+    b.classList.add('holding');
+    hold = { b: b, timer: setTimeout(function () {
+      hold = null; b.classList.remove('holding');
+      if (S.dragged) return;
+      vibrate('tick');
+      tap(k);
+    }, HOLD_MS) };
+  }
+  function cancelHold(early) {
+    if (!hold) return;
+    clearTimeout(hold.timer); hold.b.classList.remove('holding'); hold = null;
+    if (early) S.hintUntil = performance.now() + 1500;
   }
 
   // ---------- render ----------
@@ -450,7 +513,8 @@ body {
           b.style.setProperty('--c', c);
           b.textContent = txt;
           if (DEF[k] && DEF[k].num && d.counts[k]) b.appendChild(el('span', 'n', '×' + d.counts[k]));
-          b.onclick = function () { tap(k); };
+          b.onpointerdown = function () { startHold(b, k); };
+          b.onclick = function (ev) { if (ev.detail === 0) tap(k); }; // keyboard Enter/Space still works
           g.appendChild(b);
         });
         pg.appendChild(g);
@@ -515,16 +579,18 @@ body {
   function renderRhythm() {
     var ov = el('div', 'ov');
     ov.appendChild(el('div', 'ttl', 'RHYTHM CHECK'));
+    R.pz = el('div', 'pz', '');
+    ov.appendChild(R.pz);
     var g = el('div', 'grid');
     [['VF/pVT', 'amber', 'SHOCKABLE'], ['PEA', 'cyan', 'NON-SHOCK'], ['Asystole', 'cyan', 'NON-SHOCK'], ['ROSC', 'green', 'NADI +']].forEach(function (r) {
       var b = el('button', 'act', r[0] + '<small>' + r[2] + '</small>');
       b.style.setProperty('--c', 'var(--' + r[1] + ')');
-      b.onclick = function () { S.overlay = null; S.page = 0; if (r[0] === 'ROSC') log('rosc'); else log('rhythm', r[0]); };
+      b.onclick = function () { closeRhythm(); S.page = 0; if (r[0] === 'ROSC') log('rosc'); else log('rhythm', r[0]); };
       g.appendChild(b);
     });
     ov.appendChild(g);
     var c = el('button', 'cancel', 'Tutup');
-    c.onclick = function () { S.overlay = null; render(); };
+    c.onclick = function () { closeRhythm(); render(); };
     ov.appendChild(c);
     screen.appendChild(ov);
   }
@@ -550,9 +616,11 @@ body {
     var out = el('div', 'out', s.outcome === 'ROSC' ? 'ROSC' : 'TOD ' + clock(s, s.duration).slice(0, 5));
     out.style.color = s.outcome === 'ROSC' ? 'var(--green)' : 'var(--red)';
     w.appendChild(out);
-    w.appendChild(el('div', 'stats', '<div><b>' + (c.shock || 0) + '</b>Shock</div><div><b>' + (c.epi || 0) + '</b>Epi</div><div><b>' + (c.amio || 0) + '</b>Amio</div>'));
+    var m = metrics(s);
+    var ccf = m.ccf == null ? '—' : Math.round(m.ccf * 100) + '%';
+    w.appendChild(el('div', 'stats', '<div><b>' + (c.shock || 0) + '</b>Shock</div><div><b>' + (c.epi || 0) + '</b>Epi</div><div><b style="color:' + ccfColor(m.ccf) + '">' + ccf + '</b>CPR fraction</div>'));
     var row = el('div', 'row');
-    var lg = el('button', 'ghost', 'Lihat log'); lg.onclick = function () { S.histIdx = 0; S.view = 'histlog'; render(); };
+    var lg = el('button', 'ghost', 'Detail & log'); lg.onclick = function () { S.histIdx = 0; S.view = 'histlog'; render(); };
     var done = el('button', 'ghost', 'Selesai'); done.onclick = function () { S.session = null; S.view = 'start'; render(); };
     row.appendChild(lg); row.appendChild(done); w.appendChild(row);
     screen.appendChild(w);
@@ -585,7 +653,28 @@ body {
     screen.appendChild(top);
     var back = el('button', 'back', '‹ Riwayat'); back.onclick = function () { S.view = 'history'; render(); };
     screen.appendChild(back);
-    screen.appendChild(buildList(s, false));
+    var list = buildList(s, false);
+    var m = metrics(s), rows = [
+      [m.ccf == null ? '—' : Math.round(m.ccf * 100) + '%', 'CPR fraction', 'Target ≥ 80%', ccfColor(m.ccf)],
+      [sec(m.pauseAvg), 'Jeda rata-rata', m.pauses + ' jeda · total ' + sec(m.pauseTot), m.pauseAvg != null && m.pauseAvg >= PAUSE_MS ? 'var(--red)' : 'var(--cyan)'],
+      [sec(m.pauseMax), 'Jeda terlama', 'Target < 10 s', m.pauseMax != null && m.pauseMax >= PAUSE_MS ? 'var(--red)' : 'var(--cyan)'],
+      [String(m.cycles), 'Siklus CPR', 'Jumlah siklus dimulai', 'var(--slate)'],
+      [m.firstShock == null ? '—' : fmtMS(m.firstShock), 'Time to 1st shock', 'Sejak Start CPR', 'var(--amber)'],
+      [m.firstEpi == null ? '—' : fmtMS(m.firstEpi), 'Time to 1st epi', 'Sejak Start CPR', 'var(--red)']
+    ];
+    var frag = document.createDocumentFragment();
+    frag.appendChild(el('div', 'sec', 'KUALITAS RESUSITASI'));
+    rows.forEach(function (r) {
+      var it = el('div', 'item met');
+      it.style.setProperty('--c', r[3]);
+      it.appendChild(el('span', 't', r[0]));
+      var l = el('span', 'l', r[1]); l.appendChild(el('span', 'w', r[2]));
+      it.appendChild(l);
+      frag.appendChild(it);
+    });
+    frag.appendChild(el('div', 'sec', 'LOG'));
+    list.insertBefore(frag, list.firstChild);
+    screen.appendChild(list);
   }
 
   // ---------- per-tick update (text only, no rebuild) ----------
@@ -613,10 +702,17 @@ body {
       if (rem <= PRE_MS && rem > 0 && !S.fired[d.cycleId + 'pre']) { S.fired[d.cycleId + 'pre'] = 1; vibrate('pre'); }
       if (rem <= 0 && !S.fired[d.cycleId + 'end']) { S.fired[d.cycleId + 'pre'] = 1; S.fired[d.cycleId + 'end'] = 1; vibrate('cycle');
         // Cycle end opens the rhythm picker by itself; no Rhythm Check button needed on Main.
-        if (!S.overlay) { S.overlay = 'rhythm'; S.openItem = null; render(); return; }
+        if (!S.overlay) { openRhythm(); render(); return; }
       }
       if (d.lastEpi && d.epiSince >= EPI_MS && !S.fired['epi' + d.lastEpi.id]) { S.fired['epi' + d.lastEpi.id] = 1; vibrate('epi'); }
     }
+    if (S.overlay === 'rhythm' && S.pauseStart != null && R.pz) {
+      var pz = t - S.pauseStart;
+      R.pz.innerHTML = '<small>JEDA</small>' + fmtMS(pz);
+      R.pz.className = 'pz' + (pz >= PAUSE_MS ? ' long' : '');
+      if (pz >= PAUSE_MS && !S.fired['pause' + S.pauseStart]) { S.fired['pause' + S.pauseStart] = 1; vibrate('pause'); }
+    }
+    if (performance.now() < S.hintUntil && !(S.toast && S.toast.adv)) { R.lbl.textContent = 'Tahan untuk mencatat'; R.lbl.className = 'lbl adv'; return; }
     // Advice borrows the small label line above the timer while the toast is up, so the timer and buttons stay clear.
     if (S.toast && S.toast.adv) { R.lbl.textContent = S.toast.adv; R.lbl.className = 'lbl adv'; }
     else R.lbl.className = 'lbl';
@@ -635,7 +731,7 @@ body {
     if (S.view !== 'run' || S.overlay || e.buttons === 0 && e.pointerType === 'mouse') return;
     var scale = 466 / document.getElementById('fit').offsetWidth;
     var mx = (e.clientX - sx) * scale, my = (e.clientY - sy) * scale;
-    if (!mode && (Math.abs(mx) > 12 || Math.abs(my) > 12)) mode = Math.abs(mx) > Math.abs(my) ? 'x' : 'y';
+    if (!mode && (Math.abs(mx) > 12 || Math.abs(my) > 12)) { mode = Math.abs(mx) > Math.abs(my) ? 'x' : 'y'; cancelHold(); }
     if (mode === 'x' && R.pager) {
       dx = mx; S.dragged = true;
       R.pager.classList.add('drag');
@@ -643,6 +739,7 @@ body {
     }
   });
   function endDrag() {
+    cancelHold(!mode);
     if (mode === 'x' && R.pager) {
       var p = S.page;
       if (dx < -60 && p < PAGES.length - 1) p++;
