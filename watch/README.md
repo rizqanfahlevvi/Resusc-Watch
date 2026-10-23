@@ -1,6 +1,6 @@
 # Code Blue Helper — app Zepp OS
 
-App jam untuk Amazfit (layar bulat, Zepp OS API 3.0+). Fiturnya sama dengan prototipe di `../prototype/index.html`.
+App jam untuk Amazfit (layar bulat, Zepp OS API 3.0+). Perangkat uji utama: Amazfit Active Premium, Zepp OS 5, layar 466×466 px. Fiturnya sama dengan prototipe di `../prototype/index.html`.
 
 ## Struktur
 
