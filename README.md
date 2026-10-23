@@ -6,7 +6,8 @@ Aplikasi Zepp OS (Amazfit Active Premium) untuk mencatat waktu setiap tindakan s
 
 ## Status
 
-- `prototype/index.html` — prototipe UI interaktif di browser (v0.1) untuk menguji alur sebelum ditulis sebagai app Zepp OS.
+- `prototype/index.html` — prototipe UI interaktif di browser (v0.1).
+- `watch/` — app Zepp OS (API 3.0+, layar bulat). Panduan menjalankan & memasang ada di `watch/README.md`.
 
 ## Spesifikasi v1 (disepakati)
 
