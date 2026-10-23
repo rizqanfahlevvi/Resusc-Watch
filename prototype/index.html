@@ -115,7 +115,7 @@ body {
 .toast .undo { height: 32px; background: var(--black); color: var(--white); border: 0; border-radius: 18px; font-size: 18px; font-weight: 700; padding: 0 14px; }
 .hdr .lbl.adv { color: var(--amber); font-size: 19px; letter-spacing: .02em; white-space: nowrap; }
 
-.ov { position: absolute; inset: 0; z-index: 8; background: rgba(0,0,0,.94); display: flex; flex-direction: column; align-items: center; }
+.ov { position: absolute; inset: 0; z-index: 8; background: var(--black); display: flex; flex-direction: column; align-items: center; }
 .ov .ttl { margin-top: 58px; font-size: 22px; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
 .ov .grid { top: 106px; height: 240px; }
 .ov .cancel { position: absolute; bottom: 40px; background: #1d2329; border: 0; border-radius: 999px; font-size: 22px; font-weight: 600; padding: 10px 34px; }
@@ -188,7 +188,7 @@ body {
       <ul>
         <li><b>START CODE</b> langsung memulai total waktu dan siklus CPR 2 menit (ring di tepi layar).</li>
         <li>Swipe kiri/kanan: <b>Main → Drugs → Airway &amp; Access → Team &amp; Events → Log</b>. Header timer selalu terlihat.</li>
-        <li><b>Rhythm Check</b>: pilih ritme, lalu siklus CPR baru otomatis dimulai.</li>
+        <li>Saat siklus 2 menit habis, layar <b>Rhythm Check</b> muncul otomatis. Pilih ritme, lalu siklus baru dimulai dan layar kembali ke Main. Untuk cek ritme lebih awal, gunakan tombol Rhythm Check di halaman Team &amp; Events.</li>
         <li>Setiap tap memunculkan konfirmasi + <b>UNDO</b> selama 5 detik. Di halaman Log, tap event untuk menghapus.</li>
         <li>Timer Epi dihitung dari dosis terakhir; status <b>DUE</b> muncul di 3:00.</li>
         <li>Saran (advice) muncul sebentar di baris kecil di atas timer, tidak pernah memblokir.</li>
@@ -201,7 +201,7 @@ body {
       <ul>
         <li>Susunan dan isi 4 halaman tombol: ada yang perlu dipindah, ditambah, atau dibuang?</li>
         <li>Ukuran tombol dan teks: masih nyaman untuk tap cepat?</li>
-        <li>Alur Rhythm Check → siklus baru: sesuai praktik Anda?</li>
+        <li>Rhythm Check otomatis di akhir siklus: sesuai praktik Anda?</li>
         <li>Teks saran: terlalu banyak atau kurang?</li>
       </ul>
     </div>
@@ -241,8 +241,8 @@ body {
 
   var PAGES = [
     { name: 'MAIN', items: [
-      { k: 'rhythm', t: 'Rhythm\nCheck' }, { k: 'shock', t: 'Shock' },
-      { k: 'epi', t: 'Epinephrine' }, { k: 'amio', t: 'Amiodarone' } ] },
+      { k: 'shock', t: 'Shock' }, { k: 'epi', t: 'Epinephrine' },
+      { k: 'amio', t: 'Amiodarone' }, { k: 'swap', t: 'Ganti\nKompresor' } ] },
     { name: 'DRUGS', items: [
       { k: 'lido', t: 'Lidocaine' }, { k: 'mg', t: 'MgSO₄' },
       { k: 'bicarb', t: 'Bicarbonate' }, { k: 'calcium', t: 'Calcium' } ] },
@@ -250,7 +250,7 @@ body {
       { k: 'iv', t: 'IV' }, { k: 'io', t: 'IO' },
       { k: 'sga', t: 'SGA' }, { k: 'ett', t: 'ETT' } ] },
     { name: 'TEAM · EVENTS', items: [
-      { k: 'swap', t: 'Ganti\nKompresor' }, { k: 'other', t: 'Tindakan\nLain' },
+      { k: 'rhythm', t: 'Rhythm\nCheck' }, { k: 'other', t: 'Tindakan\nLain' },
       { k: 'rosc', t: 'ROSC' }, { k: 'stop', t: 'Stop\nTOD' } ] },
     { name: 'LOG', log: true }
   ];
@@ -501,16 +501,16 @@ body {
 
   function renderRhythm() {
     var ov = el('div', 'ov');
-    ov.appendChild(el('div', 'ttl', 'RHYTHM'));
+    ov.appendChild(el('div', 'ttl', 'RHYTHM CHECK'));
     var g = el('div', 'grid');
     [['VF/pVT', 'amber', 'SHOCKABLE'], ['PEA', 'cyan', 'NON-SHOCK'], ['Asystole', 'cyan', 'NON-SHOCK'], ['ROSC', 'green', 'NADI +']].forEach(function (r) {
       var b = el('button', 'act', r[0] + '<small>' + r[2] + '</small>');
       b.style.setProperty('--c', 'var(--' + r[1] + ')');
-      b.onclick = function () { S.overlay = null; if (r[0] === 'ROSC') log('rosc'); else log('rhythm', r[0]); };
+      b.onclick = function () { S.overlay = null; S.page = 0; if (r[0] === 'ROSC') log('rosc'); else log('rhythm', r[0]); };
       g.appendChild(b);
     });
     ov.appendChild(g);
-    var c = el('button', 'cancel', 'Batal');
+    var c = el('button', 'cancel', 'Tutup');
     c.onclick = function () { S.overlay = null; render(); };
     ov.appendChild(c);
     screen.appendChild(ov);
@@ -598,7 +598,10 @@ body {
       else if (rem <= PRE_MS) R.ring.classList.add('warn');
       R.prog.setAttribute('stroke-dashoffset', R.C * (1 - Math.max(0, rem) / CYCLE_MS));
       if (rem <= PRE_MS && rem > 0 && !S.fired[d.cycleId + 'pre']) { S.fired[d.cycleId + 'pre'] = 1; vibrate('pre'); }
-      if (rem <= 0 && !S.fired[d.cycleId + 'end']) { S.fired[d.cycleId + 'pre'] = 1; S.fired[d.cycleId + 'end'] = 1; vibrate('cycle'); }
+      if (rem <= 0 && !S.fired[d.cycleId + 'end']) { S.fired[d.cycleId + 'pre'] = 1; S.fired[d.cycleId + 'end'] = 1; vibrate('cycle');
+        // Cycle end opens the rhythm picker by itself; no Rhythm Check button needed on Main.
+        if (!S.overlay) { S.overlay = 'rhythm'; S.openItem = null; render(); return; }
+      }
       if (d.lastEpi && d.epiSince >= EPI_MS && !S.fired['epi' + d.lastEpi.id]) { S.fired['epi' + d.lastEpi.id] = 1; vibrate('epi'); }
     }
     // Advice borrows the small label line above the timer while the toast is up, so the timer and buttons stay clear.
