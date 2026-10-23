@@ -72,7 +72,7 @@ body {
 
 .hdr { position: absolute; left: 0; right: 0; top: 34px; text-align: center; pointer-events: none; z-index: 3; }
 .hdr .lbl { font-size: 17px; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
-.hdr .big { font-size: 60px; font-weight: 700; line-height: .95; font-variant-numeric: tabular-nums; }
+.hdr .big { font-size: 66px; font-weight: 700; line-height: .95; font-variant-numeric: tabular-nums; }
 .hdr .big.over { color: var(--red); }
 .hdr .big.rosc { color: var(--green); }
 .hdr .sub { margin-top: 4px; display: flex; justify-content: center; gap: 10px; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -719,7 +719,7 @@ body {
     } else {
       var rem = d.cycleRem;
       R.lbl.textContent = rem <= 0 ? 'RHYTHM CHECK' : 'CYCLE';
-      R.big.textContent = fmt(rem);
+      R.big.textContent = fmtMS(rem, true);
       if (rem <= 0) { R.big.classList.add('over'); R.ring.classList.add('over'); }
       else if (rem <= PRE_MS) R.ring.classList.add('warn');
       R.prog.setAttribute('stroke-dashoffset', R.C * (1 - Math.max(0, rem) / CYCLE_MS));

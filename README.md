@@ -17,7 +17,7 @@ Aplikasi Zepp OS (Amazfit Active Premium) untuk mencatat waktu setiap tindakan s
 - Shock cukup dihitung (tanpa energi).
 - Tombol di halaman yang bisa di-swipe; layar selalu menyala; getar sebagai pengingat.
 - Undo + hapus event; riwayat beberapa sesi tersimpan di jam; tanpa identitas pasien.
-- Format waktu: timer siklus (countdown) `MM:SS:cc` live; Total, countdown Epi, waktu sejak ROSC, ringkasan `MM:SS`; Log `MM:SS:cc`.
+- Format waktu: timer siklus (countdown) `MM:SS`; Total, countdown Epi, waktu sejak ROSC, ringkasan `MM:SS`; Log `MM:SS:cc`.
 - Tahan tombol ±0,3 detik untuk mencatat (proteksi salah sentuh saat kompresi); tap sekilas tidak tercatat.
 - Timer jeda kompresi di layar Rhythm Check; getar panjang saat jeda ≥ 10 detik.
 - Ringkasan sesi: CPR fraction (target ≥ 80%), jeda rata-rata/terlama, jumlah siklus, time to first shock, time to first epi.

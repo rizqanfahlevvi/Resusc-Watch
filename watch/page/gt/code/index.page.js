@@ -18,7 +18,7 @@ import { text, rect, frame, arc, show, setText, setColor, onTap, onPress, listRo
 // which is cheaper on the watch than deleting and recreating them.
 
 const LOG_ROWS = 4
-const TICK_MS = 50
+const TICK_MS = 200 // no hundredths on screen, so 5 updates/s is enough and saves battery
 
 const S = {
   session: null,
@@ -56,7 +56,7 @@ function buildHeader() {
   // Angles: -90 is 12 o'clock on Zepp OS ARC. Progress shrinks clockwise as the cycle runs down.
   W.ring = arc({ x: 6, y: 6, w: 468, h: 468, start: -90, end: 270, color: COLORS.cyan, lw: 14 })
   W.lbl = text({ x: 90, y: 40, w: 300, h: 30, text: 'CYCLE', size: 22, color: COLORS.muted })
-  W.big = text({ x: 50, y: 68, w: 380, h: 72, text: '02:00:00', size: 62 })
+  W.big = text({ x: 50, y: 68, w: 380, h: 72, text: '02:00', size: 68 })
   W.totalBg = rect({ x: 100, y: 142, w: 136, h: 34, r: 17, color: COLORS.chip })
   W.total = text({ x: 100, y: 142, w: 136, h: 34, text: 'TOTAL 00:00', size: 22 })
   W.epiBg = rect({ x: 244, y: 142, w: 136, h: 34, r: 17, color: COLORS.chip })
@@ -382,7 +382,7 @@ function tick() {
   } else {
     const rem = d.cycleRem
     label = rem <= 0 ? 'RHYTHM CHECK' : 'CYCLE'
-    put('big', W.big, fmtCC(rem), setText)
+    put('big', W.big, fmtMS(rem, true), setText)
     put('bigFg', W.big, rem <= 0 ? COLORS.red : COLORS.white, setColor)
     // Overtime blinks the ring red at 1 Hz.
     const blink = rem <= 0 && Math.floor(-rem / 500) % 2 === 1
