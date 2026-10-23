@@ -16,4 +16,4 @@ Aplikasi Zepp OS (Amazfit Active Premium) untuk mencatat waktu setiap tindakan s
 - Shock cukup dihitung (tanpa energi).
 - Tombol di halaman yang bisa di-swipe; layar selalu menyala; getar sebagai pengingat.
 - Undo + hapus event; riwayat beberapa sesi tersimpan di jam; tanpa identitas pasien.
-- Format waktu: timer siklus & waktu sejak ROSC `MM:SS`; Total, Epi, Log, ringkasan `MM:SS:cc` (milidetik 2 digit), dan milidetik ditampilkan live di layar (bukan hanya di log).
+- Format waktu: timer siklus (countdown) `MM:SS:cc` live; Total, countdown Epi, waktu sejak ROSC, ringkasan `MM:SS`; Log `MM:SS:cc`.

@@ -72,7 +72,7 @@ body {
 
 .hdr { position: absolute; left: 0; right: 0; top: 34px; text-align: center; pointer-events: none; z-index: 3; }
 .hdr .lbl { font-size: 17px; font-weight: 600; letter-spacing: .16em; color: var(--muted); }
-.hdr .big { font-size: 66px; font-weight: 700; line-height: .95; font-variant-numeric: tabular-nums; }
+.hdr .big { font-size: 60px; font-weight: 700; line-height: .95; font-variant-numeric: tabular-nums; }
 .hdr .big.over { color: var(--red); }
 .hdr .big.rosc { color: var(--green); }
 .hdr .sub { margin-top: 4px; display: flex; justify-content: center; gap: 10px; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -192,7 +192,7 @@ body {
         <li>Swipe kiri/kanan: <b>Main → Drugs → Airway &amp; Access → Team &amp; Events → Log</b>. Header timer selalu terlihat.</li>
         <li>Saat siklus 2 menit habis, layar <b>Rhythm Check</b> muncul otomatis. Pilih ritme, lalu siklus baru dimulai dan layar kembali ke Main. Untuk cek ritme lebih awal, gunakan tombol Rhythm Check di halaman Team &amp; Events.</li>
         <li>Setiap tap memunculkan konfirmasi + <b>UNDO</b> selama 5 detik. Di halaman Log, tap event untuk menghapus.</li>
-        <li>Timer Epi dihitung dari dosis terakhir; status <b>DUE</b> muncul di 3:00.</li>
+        <li>Timer Epi menghitung mundur 3:00 dari dosis terakhir; setelah habis berubah jadi <b>EPI DUE</b> dan menghitung waktu lewat.</li>
         <li>Saran (advice) muncul sebentar di baris kecil di atas timer, tidak pernah memblokir.</li>
         <li>Sesi yang selesai tersimpan di <b>Riwayat</b> (hanya di browser ini).</li>
       </ul>
@@ -265,14 +265,14 @@ body {
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function fmt(ms) {
     var neg = ms < 0; ms = Math.abs(ms);
-    // Elapsed times: MM:SS:cc (minutes : seconds : hundredths), like a stopwatch.
+    // Cycle countdown and log: MM:SS:cc (minutes : seconds : hundredths), like a stopwatch.
     var s = Math.floor(ms / 1000), m = Math.floor(s / 60), cs = Math.floor((ms % 1000) / 10);
     return (neg ? '+' : '') + pad(m) + ':' + pad(s % 60) + ':' + pad(cs);
   }
-  // Cycle countdown and time since ROSC: plain MM:SS so it reads at a glance.
-  function fmtMS(ms) {
+  // Total, Epi countdown, time since ROSC: plain MM:SS. Countdowns round up so a fresh 3 min shows 03:00.
+  function fmtMS(ms, up) {
     var neg = ms < 0; ms = Math.abs(ms);
-    var s = neg ? Math.floor(ms / 1000) : Math.ceil(ms / 1000);
+    var s = up && !neg ? Math.ceil(ms / 1000) : Math.floor(ms / 1000);
     return (neg ? '+' : '') + pad(Math.floor(s / 60)) + ':' + pad(s % 60);
   }
   function clock(sess, t) { var d = new Date(sess.wallStart + t); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
@@ -546,7 +546,7 @@ body {
     var s = S.session, d = derive(s.events, s.duration), c = d.counts;
     var w = el('div', 'center sum');
     w.appendChild(el('div', 'brand', 'SESI SELESAI'));
-    w.appendChild(el('div', 'big', fmt(s.duration)));
+    w.appendChild(el('div', 'big', fmtMS(s.duration)));
     var out = el('div', 'out', s.outcome === 'ROSC' ? 'ROSC' : 'TOD ' + clock(s, s.duration).slice(0, 5));
     out.style.color = s.outcome === 'ROSC' ? 'var(--green)' : 'var(--red)';
     w.appendChild(out);
@@ -569,7 +569,7 @@ body {
     h.forEach(function (s, i) {
       var it = el('button', 'item');
       it.style.setProperty('--c', s.outcome === 'ROSC' ? 'var(--green)' : 'var(--red)');
-      it.appendChild(el('span', 't', fmt(s.duration)));
+      it.appendChild(el('span', 't', fmtMS(s.duration)));
       var l = el('span', 'l', s.outcome); l.appendChild(el('span', 'w', dateStr(s.wallStart) + ' · ' + s.events.length + ' event'));
       it.appendChild(l);
       it.onclick = function () { S.histIdx = i; S.view = 'histlog'; render(); };
@@ -592,10 +592,10 @@ body {
   function update() {
     if (S.view !== 'run' || !R.big) return;
     var t = now(), d = derive(S.session.events, t);
-    R.total.textContent = 'TOTAL ' + fmt(t);
+    R.total.textContent = 'TOTAL ' + fmtMS(t);
     if (d.lastEpi) {
       var due = d.epiSince >= EPI_MS;
-      R.epi.textContent = due ? 'EPI DUE ' + fmt(d.epiSince) : 'EPI ' + fmt(d.epiSince);
+      R.epi.textContent = due ? 'EPI DUE ' + fmtMS(EPI_MS - d.epiSince) : 'EPI ' + fmtMS(EPI_MS - d.epiSince, true);
       R.epi.className = due && !d.rosc ? 'due' : '';
     } else { R.epi.textContent = 'EPI —'; R.epi.className = ''; }
     R.ring.setAttribute('class', 'ring');
@@ -606,7 +606,7 @@ body {
     } else {
       var rem = d.cycleRem;
       R.lbl.textContent = rem <= 0 ? 'RHYTHM CHECK' : 'CYCLE';
-      R.big.textContent = fmtMS(rem);
+      R.big.textContent = fmt(rem);
       if (rem <= 0) { R.big.classList.add('over'); R.ring.classList.add('over'); }
       else if (rem <= PRE_MS) R.ring.classList.add('warn');
       R.prog.setAttribute('stroke-dashoffset', R.C * (1 - Math.max(0, rem) / CYCLE_MS));
