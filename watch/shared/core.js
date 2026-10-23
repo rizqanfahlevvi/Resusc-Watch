@@ -53,11 +53,11 @@ export const DEF = {
 
 export const PAGES = [
   { name: 'MAIN', items: [
-    { k: 'shock', t: 'Shock' }, { k: 'epi', t: 'Epinephrine' },
-    { k: 'amio', t: 'Amiodarone' }, { k: 'swap', t: 'Ganti\nKompresor' }] },
+    { k: 'shock', t: 'Shock' }, { k: 'epi', t: 'Epi' },
+    { k: 'amio', t: 'Amio' }, { k: 'swap', t: 'Ganti\nKompresor' }] },
   { name: 'DRUGS', items: [
-    { k: 'lido', t: 'Lidocaine' }, { k: 'mg', t: 'MgSO4' },
-    { k: 'bicarb', t: 'Bicarbonate' }, { k: 'calcium', t: 'Calcium' }] },
+    { k: 'lido', t: 'Lido' }, { k: 'mg', t: 'MgSO4' },
+    { k: 'bicarb', t: 'Bicarb' }, { k: 'calcium', t: 'Calcium' }] },
   { name: 'AIRWAY · ACCESS', items: [
     { k: 'iv', t: 'IV' }, { k: 'io', t: 'IO' },
     { k: 'sga', t: 'SGA' }, { k: 'ett', t: 'ETT' }] },

@@ -261,11 +261,11 @@ body {
 
   var PAGES = [
     { name: 'MAIN', items: [
-      { k: 'shock', t: 'Shock' }, { k: 'epi', t: 'Epinephrine' },
-      { k: 'amio', t: 'Amiodarone' }, { k: 'swap', t: 'Ganti\nKompresor' } ] },
+      { k: 'shock', t: 'Shock' }, { k: 'epi', t: 'Epi' },
+      { k: 'amio', t: 'Amio' }, { k: 'swap', t: 'Ganti\nKompresor' } ] },
     { name: 'DRUGS', items: [
-      { k: 'lido', t: 'Lidocaine' }, { k: 'mg', t: 'MgSO₄' },
-      { k: 'bicarb', t: 'Bicarbonate' }, { k: 'calcium', t: 'Calcium' } ] },
+      { k: 'lido', t: 'Lido' }, { k: 'mg', t: 'MgSO₄' },
+      { k: 'bicarb', t: 'Bicarb' }, { k: 'calcium', t: 'Calcium' } ] },
     { name: 'AIRWAY · ACCESS', items: [
       { k: 'iv', t: 'IV' }, { k: 'io', t: 'IO' },
       { k: 'sga', t: 'SGA' }, { k: 'ett', t: 'ETT' } ] },
@@ -575,7 +575,7 @@ body {
     t.appendChild(el('div', 'a', '✓ ' + labels(S.session.events)[ev.id]));
     if (ev.type !== 'start') {
       // The whole pill is the undo target, so it can be hit with gloves on.
-      t.appendChild(el('span', 'undo', '↶ UNDO'));
+      t.appendChild(el('span', 'undo', 'UNDO'));
       t.classList.add('tap');
       t.setAttribute('role', 'button');
       t.setAttribute('aria-label', 'Undo ' + labels(S.session.events)[ev.id]);

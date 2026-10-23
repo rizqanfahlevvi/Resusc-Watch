@@ -95,7 +95,7 @@ function buildToast() {
   W.toastBg = rect({ x: 92, y: 140, w: 296, h: 38, r: 19, color: COLORS.toast })
   W.toastTxt = text({ x: 108, y: 140, w: 182, h: 38, text: '', size: 20, color: COLORS.black, left: true })
   W.chip = rect({ x: 292, y: 143, w: 92, h: 32, r: 16, color: COLORS.black })
-  W.chipTxt = text({ x: 292, y: 143, w: 92, h: 32, text: '↶ UNDO', size: 17 })
+  W.chipTxt = text({ x: 292, y: 143, w: 92, h: 32, text: 'UNDO', size: 18 })
   W.toast = [W.toastBg, W.toastTxt, W.chip, W.chipTxt]
   onTap(W.toast, undoToast)
 }
