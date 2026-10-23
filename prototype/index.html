@@ -149,6 +149,11 @@ body {
 .startbtn:active { transform: scale(.97); }
 .startbtn small { display: block; font-size: 19px; letter-spacing: .1em; margin-top: 6px; }
 .ghost { background: #1a2026; border: 0; border-radius: 999px; font-size: 21px; font-weight: 600; padding: 9px 26px; }
+.center > .row { display: flex; gap: 10px; justify-content: center; }
+.credit .cname { font-size: 50px; font-weight: 700; line-height: .95; margin-top: 10px; color: var(--cyan); }
+.credit .cver { font-size: 17px; color: var(--muted); letter-spacing: .08em; margin-top: 6px; }
+.credit .cby { font-size: 30px; font-weight: 700; margin-top: 18px; }
+.credit .cby small { display: block; font-size: 16px; font-weight: 600; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; margin-bottom: 2px; }
 .disc { font-size: 14px; color: var(--muted); max-width: 250px; line-height: 1.15; margin-top: 12px; font-family: var(--f-num); }
 .sum .big { font-size: 58px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .sum .out { font-size: 26px; font-weight: 700; margin-top: 2px; }
@@ -458,6 +463,7 @@ body {
     if (S.view === 'summary') return renderSummary();
     if (S.view === 'history') return renderHistory();
     if (S.view === 'histlog') return renderHistLog();
+    if (S.view === 'credit') return renderCredit();
   }
 
   function renderStart() {
@@ -468,7 +474,11 @@ body {
     c.appendChild(b);
     var h = el('button', 'ghost', 'Riwayat (' + loadHist().length + ')');
     h.onclick = function () { S.view = 'history'; render(); };
-    c.appendChild(h);
+    var cr = el('button', 'ghost', 'Credit');
+    cr.onclick = function () { S.view = 'credit'; render(); };
+    var row = el('div', 'row');
+    row.appendChild(h); row.appendChild(cr);
+    c.appendChild(row);
     c.appendChild(el('div', 'disc', 'Alat bantu timer & pencatatan. Bukan perangkat medis. Keputusan klinis tetap di tangan Anda.'));
     screen.appendChild(c);
   }
@@ -624,6 +634,20 @@ body {
     var done = el('button', 'ghost', 'Selesai'); done.onclick = function () { S.session = null; S.view = 'start'; render(); };
     row.appendChild(lg); row.appendChild(done); w.appendChild(row);
     screen.appendChild(w);
+  }
+
+  function renderCredit() {
+    var c = el('div', 'center credit');
+    c.appendChild(el('div', 'brand', 'CREDIT'));
+    c.appendChild(el('div', 'cname', 'Code Blue<br>Helper'));
+    c.appendChild(el('div', 'cver', 'v0.1 · prototype'));
+    c.appendChild(el('div', 'cby', '<small>Credit by</small>@rizqanfahlevvi'));
+    c.appendChild(el('div', 'disc', 'Alat bantu timer & pencatatan. Bukan perangkat medis.'));
+    var back = el('button', 'ghost', '‹ Kembali');
+    back.style.marginTop = '14px';
+    back.onclick = function () { S.view = 'start'; render(); };
+    c.appendChild(back);
+    screen.appendChild(c);
   }
 
   function renderHistory() {

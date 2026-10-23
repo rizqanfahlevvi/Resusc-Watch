@@ -20,3 +20,7 @@ Aplikasi Zepp OS (Amazfit Active Premium) untuk mencatat waktu setiap tindakan s
 - Tahan tombol ±0,3 detik untuk mencatat (proteksi salah sentuh saat kompresi); tap sekilas tidak tercatat.
 - Timer jeda kompresi di layar Rhythm Check; getar panjang saat jeda ≥ 10 detik.
 - Ringkasan sesi: CPR fraction (target ≥ 80%), jeda rata-rata/terlama, jumlah siklus, time to first shock, time to first epi.
+
+## Credit
+
+Credit by @rizqanfahlevvi
